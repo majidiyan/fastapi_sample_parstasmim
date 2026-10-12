@@ -33,5 +33,41 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  backup:
+    image: postgres:15
+    container_name: fastapi-postgres-backup
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: ali
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      PGDATABASE: mydb
+    volumes:
+      - postgres_backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    # Take a backup immediately, then every 24 hours; keep the latest 7 days.
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        while true; do
+          stamp=$$(date -u +%Y%m%dT%H%M%SZ)
+          echo "Creating PostgreSQL backup: /backups/mydb-$$stamp.dump"
+          if pg_dump --format=custom --file="/backups/mydb-$$stamp.dump"; then
+            find /backups -type f -name 'mydb-*.dump' -mtime +7 -delete
+            echo "Backup completed."
+          else
+            echo "Backup failed; will retry in 1 hour." >&2
+            sleep 3600
+            continue
+          fi
+          sleep 86400
+        done
+
 volumes:
   postgres_data:
+  postgres_backups:
