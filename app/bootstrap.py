@@ -50,7 +50,7 @@ def create_admin_user():
             first_name="admin_firstname",
             last_name="admin_lastname",
             role_id=1,
-            hashed_password=bcrypt_context.hash("admin1234"),
+            hashed_password=bcrypt_context.hash(os.environ["ADMIN_PASSWORD"]),
         )
 
         db.add(create_user_model)
