@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy import select
 from .database import SessionLocal
 from .models import Roles, Users
@@ -5,7 +7,7 @@ from passlib.context import CryptContext
 
 
 # openssl rand -hex 32
-SECRET_KEY = "9bf30f8917a70a6fd72cc11c4f2593110c488639c09955c3670abb1042f252ba"
+SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
