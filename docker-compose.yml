@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:15
+    container_name: fastapi-postgres
+    environment:
+      POSTGRES_USER: ali
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ali -d mydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi-app
+    environment:
+      DATABASE_URL: postgresql+psycopg://ali:${POSTGRES_PASSWORD}@db:5432/mydb
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
